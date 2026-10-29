@@ -55,7 +55,7 @@ The paths are relative to the Nextcloud user's WebDAV root. Each configured fold
 
 Make sure the paths match the folder names accessible to the configured Nextcloud user.
 
-Successfully tested with the following Nextcloud versions and environments:
+## Successfully tested with the following Nextcloud versions and environments:
 
 - Nextcloud 33.0.4
 - Nextcloud 33.0.5
