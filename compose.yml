@@ -1,0 +1,17 @@
+services:
+  worker:
+    image: ghcr.io/linux-helmut/video_thumbs_relay:1.0.1
+    container_name: video-thumbs-relay
+    init: true
+    restart: "no"
+    env_file:
+      - ./worker.env
+    environment:
+      TEMP_DIR: /data/tmp_thumbs
+      FOLDER_CACHE: /data/folder_cache.csv
+      THUMB_CACHE: /data/thumb_cache.csv
+      FAIL_CACHE: /data/fail_cache.csv
+    volumes:
+      - ./data:/data
+    security_opt:
+      - no-new-privileges:true

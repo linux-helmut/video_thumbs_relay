@@ -1,33 +1,30 @@
+# Download the upstream worker in a separate build stage.
+FROM alpine/git AS upstream
+ARG UPSTREAM_REF=main
+RUN git clone --depth 1 --branch "${UPSTREAM_REF}" \
+    https://github.com/silversong88/video_thumbs_relay.git /src
 
 FROM node:lts-slim
-
 ENV NODE_ENV=production
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       ffmpeg \
-       git \
+    && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Originalprojekt beziehen
-ARG UPSTREAM_REF=main
-RUN git clone https://github.com/silversong88/video_thumbs_relay.git /tmp/upstream \
-    && mkdir -p /app \
-    && cp /tmp/upstream/worker/package.json /app/package.json \
-    && cp /tmp/upstream/worker/package-lock.json /app/package-lock.json
+# Use the upstream dependency manifests.
+COPY --from=upstream /src/worker/package.json /src/worker/package-lock.json ./
+RUN npm ci --omit=dev \
+    && npm cache clean --force
 
-# Node-Abhängigkeiten installieren
-RUN npm ci --omit=dev
+# Copy the upstream worker, then overlay the local modification.
+COPY --from=upstream /src/worker/index.js ./index.js
+COPY patches/index.js ./index.js
 
-# Original-Worker übernehmen
-RUN cp /tmp/upstream/worker/index.js /app/index.js
+RUN mkdir -p /data/tmp_thumbs \
+    && touch /app/.env \
+    && chown -R node:node /app /data
 
-# Eigene Änderungen anwenden
-COPY patches/index.js /app/index.js
-
-RUN mkdir -p /tmp/video-thumbs-relay \
-    && rm -rf /tmp/upstream
-
+USER node
 CMD ["node", "index.js"]
